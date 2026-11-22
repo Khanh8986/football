@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Bundesliga</title>
+    <link rel="stylesheet" href="./csss/league.css">
+    <link rel="stylesheet" href="./csss/style.css">
+</head>
+
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                ⚽ Football Info
+            </div>
+
+            <ul class="menu">
+                <li><a href="index.html">Trang chủ</a></li>
+                <li><a href="#">Giải đấu</a></li>
+                <li><a href="#">Giới thiệu</a></li>
+                <li><a href="#">Liên hệ</a></li>
+            </ul>
+
+            <div class="auth">
+                <a href="login.html" id="login">Đăng nhập</a>
+                <a href="register.html" id="register">Đăng ký</a>
+            </div>
+        </nav>
+
+    </header>
+
+    <div class="content">
+
+        <h1>Bundesliga</h1>
+
+        <img src="https://media.api-sports.io/football/leagues/78.png" width="110" class="img">
+
+        <p><b>Thành lập:</b> 1963</p>
+
+        <p>
+            LBundesliga được thành lập năm 1963 nhằm thống nhất hệ thống bóng đá chuyên nghiệp tại Đức. Trước đó, bóng
+            đá Đức được tổ chức theo nhiều khu vực khác nhau và chưa có một giải đấu quốc gia chính thức.
+        </p>
+
+        <p>
+            Bundesliga phát triển mạnh nhờ mô hình quản lý chuyên nghiệp, lượng khán giả đến sân đông đảo và sự phát
+            triển của hệ thống đào tạo trẻ.
+
+            Giải đấu nổi tiếng với phong cách bóng đá tốc độ, tinh thần chiến đấu cao và sự ổn định của các câu lạc bộ.
+            Bayern Munich là đội bóng thành công nhất trong lịch sử Bundesliga.
+        </p>
+
+        <button onclick="location.href='index.html'">
+            ⬅ Quay lại Trang chủ
+        </button>
+
+    </div>
+
+    <main>
+
+        <select id="league"></select>
+
+        <input id="season" value="2024">
+
+
+        <select id="round">
+            <option>Vòng đấu</option>
+        </select>
+
+
+        <button id="load">
+            Xem
+        </button>
+
+
+        <h3>Trận đấu</h3>
+
+        <div id="matches"></div>
+
+
+        <h3>Bảng xếp hạng</h3>
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Đội</th>
+                    <th>Trận</th>
+                    <th>Điểm</th>
+                </tr>
+            </thead>
+
+            <tbody id="table"></tbody>
+
+        </table>
+
+        <section id="top-players">
+
+            <h3>⚽ Vua phá lưới</h3>
+            <div id="top-scorers">
+                Chưa có dữ liệu
+            </div>
+        
+            <h3>🎯 Vua kiến tạo</h3>
+            <div id="top-assists">
+                Chưa có dữ liệu
+            </div>
+        
+        </section>
+
+    </main>
+
+    <footer class="footer">
+
+        <div class="footer-container">
+
+            <!-- Logo và giới thiệu -->
+            <div class="footer-section">
+                <h2>⚽ Football Info</h2>
+                <p>
+                    Website cung cấp thông tin về các giải bóng đá
+                    hàng đầu châu Âu.
+                </p>
+            </div>
+
+            <div class="footer-section">
+                <h3>Liên kết</h3>
+
+                <ul>
+                    <li>
+                        <a href="index.html">Trang chủ</a>
+                    </li>
+
+                    <li>
+                        <a href="#">Giải đấu</a>
+                    </li>
+
+                    <li>
+                        <a href="login.html">Đăng nhập</a>
+                    </li>
+
+                    <li>
+                        <a href="register.html">Đăng ký</a>
+                    </li>
+                </ul>
+
+            </div>
+            <div class="footer-section">
+
+                <h3>Thông tin</h3>
+
+                <p>
+                    Dữ liệu bóng đá được cung cấp bởi API-Football.
+                </p>
+
+                <p>
+                    Email: footballinfo@gmail.com
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="footer-bottom">
+
+            © 2026 Football Info. All rights reserved.
+
+        </div>
+
+    </footer>
+    <script src="jv/script.js"></script>
+</body>
+
+</html>

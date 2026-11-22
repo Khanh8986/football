@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot AI - Gemini 3.6</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Marked.js để render định dạng văn bản cơ bản -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Thanh cuộn tinh tế */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Định dạng nội dung Markdown trong tin nhắn bot */
+        .bot-markdown p {
+            margin-bottom: 0.5rem;
+            line-height: 1.55;
+        }
+        .bot-markdown p:last-child {
+            margin-bottom: 0;
+        }
+        .bot-markdown pre {
+            background-color: #1e293b;
+            color: #f8fafc;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 0.5rem 0;
+            font-size: 0.85rem;
+        }
+        .bot-markdown code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.85rem;
+        }
+        .bot-markdown :not(pre) > code {
+            background-color: #e2e8f0;
+            padding: 0.1rem 0.35rem;
+            border-radius: 0.25rem;
+            color: #0f172a;
+        }
+        .bot-markdown ul {
+            list-style-type: disc;
+            padding-left: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+        .bot-markdown ol {
+            list-style-type: decimal;
+            padding-left: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Hiệu ứng chấm nhảy (Typing Indicator) */
+        .typing-dot {
+            animation: typingBounce 1.4s infinite ease-in-out both;
+        }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typingBounce {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex items-center justify-center p-3 sm:p-6">
+
+    <!-- Container chính chứa 2 khung đặt cạnh nhau (Responsive: xếp dọc trên mobile, ngang trên desktop) -->
+    <div class="w-full max-w-5xl flex flex-col md:flex-row gap-4 sm:gap-6 items-stretch justify-center">
+
+        <!-- 1) Khung System Prompt bên trái -->
+        <aside class="w-full md:w-80 lg:w-96 bg-white rounded-3xl shadow-xl shadow-slate-200/80 border border-slate-200/80 flex flex-col overflow-hidden shrink-0 h-56 md:h-[85vh] md:max-h-[700px]">
+            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="font-semibold text-slate-800 text-sm leading-tight">System Prompt</h2>
+                        <p class="text-[11px] text-slate-400">Vai trò & chỉ dẫn cho AI</p>
+                    </div>
+                </div>
+                <button 
+                    type="button" 
+                    id="resetPromptBtn" 
+                    title="Khôi phục mặc định"
+                    class="text-xs font-medium text-slate-400 hover:text-indigo-600 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                    Mặc định
+                </button>
+            </div>
+            
+            <div class="flex-1 p-4 bg-slate-50/40 flex flex-col">
+                <textarea 
+                    id="systemPromptInput" 
+                    placeholder="Nhập chỉ dẫn hệ thống (ví dụ: Bạn là chuyên gia lập trình web, hãy trả lời ngắn gọn, dễ hiểu...)"
+                    class="w-full h-full bg-white text-slate-700 placeholder-slate-400 text-sm p-3.5 rounded-2xl border border-slate-200/80 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 focus:outline-none resize-none leading-relaxed transition-all"
+                >Bạn là trợ lý AI hữu ích, thân thiện và thông minh. Hãy trả lời chính xác, ngắn gọn và trình bày rõ ràng bằng tiếng Việt.</textarea>
+            </div>
+        </aside>
+
+        <!-- 2) Khung Chat Chính bên phải -->
+        <div class="w-full flex-1 bg-white rounded-3xl shadow-xl shadow-slate-200/80 border border-slate-200/80 flex flex-col h-[75vh] md:h-[85vh] max-h-[700px] overflow-hidden">
+            
+            <!-- Tiêu đề nhỏ ở trên -->
+            <header class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="font-semibold text-slate-800 text-sm sm:text-base leading-tight">Trợ Lý AI</h1>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span class="text-xs text-slate-400 font-medium">Model: gemini-3.6</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Vùng hiển thị tin nhắn -->
+            <main id="chatBox" class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 bg-slate-50/40 scroll-smooth">
+                <!-- Tin nhắn chào mừng ban đầu của Bot -->
+                <div class="flex items-start gap-2.5">
+                    <div class="w-7 h-7 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center shrink-0 mt-0.5 text-xs font-semibold">
+                        AI
+                    </div>
+                    <div class="bg-slate-100 text-slate-800 rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm max-w-[82%] leading-relaxed">
+                        Xin chào! Tôi có thể giúp gì cho bạn hôm nay?
+                    </div>
+                </div>
+            </main>
+
+            <!-- Hiệu ứng đang gõ (Ẩn mặc định) -->
+            <div id="typingIndicator" class="hidden px-5 pb-3 bg-slate-50/40">
+                <div class="flex items-start gap-2.5">
+                    <div class="w-7 h-7 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center shrink-0 mt-0.5 text-xs font-semibold">
+                        AI
+                    </div>
+                    <div class="bg-slate-100 rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 bg-slate-400 rounded-full typing-dot"></span>
+                        <span class="w-1.5 h-1.5 bg-slate-400 rounded-full typing-dot"></span>
+                        <span class="w-1.5 h-1.5 bg-slate-400 rounded-full typing-dot"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thanh nhập tin nhắn + nút gửi ở dưới cùng -->
+            <footer class="p-3 sm:p-4 bg-white border-t border-slate-100 shrink-0">
+                <form id="chatForm" class="flex items-end gap-2 bg-slate-100 rounded-2xl p-1.5 border border-transparent focus-within:border-blue-500 focus-within:bg-white transition-all">
+                    <textarea 
+                        id="userInput" 
+                        rows="1" 
+                        placeholder="Nhập tin nhắn..." 
+                        class="w-full bg-transparent text-slate-800 placeholder-slate-400 text-sm px-3 py-2 resize-none focus:outline-none max-h-32 overflow-y-auto leading-normal"
+                    ></textarea>
+                    <button 
+                        type="submit" 
+                        id="sendBtn"
+                        disabled
+                        class="p-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white transition-colors shrink-0 flex items-center justify-center"
+                        aria-label="Gửi tin nhắn"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
+                        </svg>
+                    </button>
+                </form>
+            </footer>
+
+        </div>
+    </div>
+
+    <script>
+        // Cấu hình Model và API Key
+        const MODEL_NAME = 'gemini-3.6-flash';
+        const FALLBACK_MODEL = 'gemini-3.6-flash';
+        const DEFAULT_SYSTEM_PROMPT = "Bạn là trợ lý AI hữu ích, thân thiện và thông minh. Hãy trả lời chính xác, ngắn gọn và trình bày rõ ràng bằng tiếng Việt.";
+        const apiKey = ""; // Hệ thống tự động cung cấp API key khi chạy
+
+        // Lưu trữ ngữ cảnh cuộc trò chuyện
+        const chatHistory = [];
+        let isWaiting = false;
+
+        // Các phần tử DOM
+        const systemPromptInput = document.getElementById('systemPromptInput');
+        const resetPromptBtn = document.getElementById('resetPromptBtn');
+        const chatBox = document.getElementById('chatBox');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const chatForm = document.getElementById('chatForm');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        // Khôi phục System Prompt mặc định
+        resetPromptBtn.addEventListener('click', () => {
+            systemPromptInput.value = DEFAULT_SYSTEM_PROMPT;
+            systemPromptInput.focus();
+        });
+
+        // Cấu hình Marked.js
+        marked.setOptions({ breaks: true, gfm: true });
+
+        // Tự động điều chỉnh chiều cao ô nhập liệu
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+            sendBtn.disabled = this.value.trim() === '' || isWaiting;
+        });
+
+        // Nhấn Enter để gửi, Shift + Enter để xuống dòng
+        userInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!sendBtn.disabled) {
+                    chatForm.dispatchEvent(new Event('submit'));
+                }
+            }
+        });
+
+        // Cuộn xuống tin nhắn mới nhất
+        function scrollToBottom() {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Thêm tin nhắn vào khung chat
+        function appendMessage(sender, text) {
+            const row = document.createElement('div');
+            
+            if (sender === 'user') {
+                // Tin nhắn người dùng bên phải màu xanh
+                row.className = 'flex justify-end';
+                const bubble = document.createElement('div');
+                bubble.className = 'bg-blue-600 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm max-w-[82%] whitespace-pre-wrap break-words leading-relaxed shadow-sm';
+                bubble.textContent = text;
+                row.appendChild(bubble);
+            } else {
+                // Tin nhắn bot bên trái màu xám nhạt
+                row.className = 'flex items-start gap-2.5';
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'w-7 h-7 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center shrink-0 mt-0.5 text-xs font-semibold';
+                avatar.textContent = 'AI';
+
+                const bubble = document.createElement('div');
+                bubble.className = 'bg-slate-100 text-slate-800 rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm max-w-[82%] break-words bot-markdown';
+                bubble.innerHTML = marked.parse(text);
+
+                row.appendChild(avatar);
+                row.appendChild(bubble);
+            }
+
+            chatBox.appendChild(row);
+            scrollToBottom();
+        }
+
+        // Gọi API với cơ chế fallback model và exponential backoff
+        async function sendToGemini(contents) {
+            // Lấy nội dung chỉ dẫn mới nhất từ khung System Prompt
+            const currentSystemInstruction = systemPromptInput.value.trim();
+
+            const payload = {
+                contents: contents
+            };
+
+            // Đưa vào cấu hình systemInstruction nếu người dùng có nhập nội dung
+            if (currentSystemInstruction) {
+                payload.systemInstruction = {
+                    parts: [{ text: currentSystemInstruction }]
+                };
+            }
+
+            // Hàm thực hiện fetch cho một model cụ thể
+            async function fetchModel(modelId) {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
+                let delay = 1000;
+
+                for (let attempt = 0; attempt <= 3; attempt++) {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if (!reply) throw new Error('Phản hồi trống từ mô hình.');
+                        return reply;
+                    }
+
+                    // Nếu lỗi 404/400 (model 'gemini-3.6' chưa được endpoint hỗ trợ trực tiếp), ném lỗi để fallback ngay
+                    if (response.status === 404 || response.status === 400) {
+                        throw new Error('MODEL_NOT_SUPPORTED');
+                    }
+
+                    if (attempt === 3) {
+                        throw new Error(`Lỗi kết nối máy chủ (${response.status})`);
+                    }
+
+                    await new Promise(res => setTimeout(res, delay));
+                    delay *= 2;
+                }
+            }
+
+            try {
+                // Thử gọi trực tiếp với MODEL_NAME ('gemini-3.6')
+                return await fetchModel(MODEL_NAME);
+            } catch (err) {
+                // Tự động chuyển sang FALLBACK_MODEL nếu endpoint chưa nhận diện tên 'gemini-3.6'
+                if (err.message === 'MODEL_NOT_SUPPORTED' && MODEL_NAME !== FALLBACK_MODEL) {
+                    return await fetchModel(FALLBACK_MODEL);
+                }
+                throw err;
+            }
+        }
+
+        // Xử lý gửi biểu mẫu
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = userInput.value.trim();
+            if (!text || isWaiting) return;
+
+            // Cập nhật trạng thái UI
+            userInput.value = '';
+            userInput.style.height = 'auto';
+            isWaiting = true;
+            sendBtn.disabled = true;
+
+            // Hiển thị và lưu tin nhắn người dùng
+            appendMessage('user', text);
+            chatHistory.push({ role: 'user', parts: [{ text: text }] });
+
+            // Bật hiệu ứng đang gõ
+            typingIndicator.classList.remove('hidden');
+            scrollToBottom();
+
+            try {
+                const replyText = await sendToGemini(chatHistory);
+                typingIndicator.classList.add('hidden');
+                
+                appendMessage('model', replyText);
+                chatHistory.push({ role: 'model', parts: [{ text: replyText }] });
+            } catch (error) {
+                typingIndicator.classList.add('hidden');
+                appendMessage('model', 'Xin lỗi, đã có lỗi xảy ra khi kết nối với AI. Vui lòng thử lại sau.');
+            } finally {
+                isWaiting = false;
+                sendBtn.disabled = userInput.value.trim() === '';
+                userInput.focus();
+            }
+        });
+    </script>
+</body>
+</html>
